@@ -1,6 +1,41 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
+
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
+
+<script>
+  const firebaseConfig = {
+    apiKey: "AIzaSyB81OqdbTMkwLw7i51X95bRQftoFAItth8",
+    authDomain: "sedrah-zither-auth.firebaseapp.com",
+    projectId: "sedrah-zither-auth",
+    storageBucket: "sedrah-zither-auth.firebasestorage.app",
+    messagingSenderId: "1043486278925",
+    appId: "1:1043486278925:web:be02b229249a6911165c44"
+  };
+  
+  firebase.initializeApp(firebaseConfig);
+
+  // LISTA DE QUEM PODE ACESSAR (Adicione os e-mails dos clientes aqui)
+  const listaAutorizada = ["lorenzzob21@gmail.com"];
+
+  // SEGURANÇA MÁXIMA: Verifica o usuário antes de mostrar a página
+  firebase.auth().onAuthStateChanged((user) => {
+    if (!user || !listaAutorizada.includes(user.email)) {
+      // Se não estiver logado ou não estiver na lista, expulsa na hora
+      window.location.href = "index.html";
+    } else {
+      // Se estiver tudo certo, mostra o conteúdo
+      document.body.style.display = "block";
+    }
+  });
+</script>
+
+<style>
+  /* Esconde o corpo da página enquanto o Firebase verifica o login */
+  body { display: none; }
+</style>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Sedrah Zither - Principal</title>
