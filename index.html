@@ -5,40 +5,85 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Login - Sedrah Zither</title>
   <link rel="stylesheet" href="style.css" />
+  <style>
+    /* Estilo do botão do Google */
+    .btn-google {
+      background: #4285F4;
+      color: white;
+      border: none;
+      padding: 12px 24px;
+      border-radius: 5px;
+      font-weight: bold;
+      cursor: pointer;
+      font-size: 16px;
+      transition: background 0.3s;
+    }
+    .btn-google:hover { background: #357abd; }
+  </style>
 </head>
 <body>
   <div id="login-screen">
-    <h2>Digite a senha para acessar</h2>
-    <input type="password" id="password" placeholder="Senha" />
-    <button onclick="checkPassword()">Entrar</button>
+    <h2>Acesso Restrito</h2>
+    <p>Faça login com sua conta autorizada para continuar.</p>
+    <button class="btn-google" onclick="signInWithGoogle()">Entrar com Google</button>
   </div>
 
   <div id="animation-screen" class="hidden">
     <canvas id="matrixCanvas"></canvas>
   </div>
 
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
+
   <script>
-    function checkPassword() {
-      const input = document.getElementById("password").value;
-      if (input === "EXSZ13") {
-        document.getElementById("login-screen").classList.add("hidden");
-        document.getElementById("animation-screen").classList.remove("hidden");
-        startMatrixAnimation();
-        setTimeout(() => {
-          window.location.href = "home.html";
-        }, 4000);
-      } else {
-        alert("Senha incorreta!");
-      }
+    // Sua configuração que você acabou de me passar
+    const firebaseConfig = {
+      apiKey: "AIzaSyB81OqdbTMkwLw7i51X95bRQftoFAItth8",
+      authDomain: "sedrah-zither-auth.firebaseapp.com",
+      projectId: "sedrah-zither-auth",
+      storageBucket: "sedrah-zither-auth.firebasestorage.app",
+      messagingSenderId: "1043486278925",
+      appId: "1:1043486278925:web:be02b229249a6911165c44"
+    };
+    
+    // Inicializa o Firebase
+    firebase.initializeApp(firebaseConfig);
+
+    // LISTA DE QUEM PODE ENTRAR (Só o seu por enquanto)
+    const listaAutorizada = ["lorenzzob21@gmail.com"];
+
+    function signInWithGoogle() {
+      const provider = new firebase.auth.GoogleAuthProvider();
+      firebase.auth().signInWithPopup(provider)
+        .then((result) => {
+          const user = result.user;
+          
+          if (listaAutorizada.includes(user.email)) {
+            // Se o e-mail estiver na lista, mostra a animação e entra
+            document.getElementById("login-screen").classList.add("hidden");
+            document.getElementById("animation-screen").classList.remove("hidden");
+            startMatrixAnimation();
+            setTimeout(() => {
+              window.location.href = "home.html";
+            }, 4000);
+          } else {
+            // Se não estiver, expulsa
+            alert("Acesso Negado! Este e-mail não tem permissão.");
+            firebase.auth().signOut();
+          }
+        })
+        .catch((error) => {
+          console.error(error);
+          alert("Erro ao tentar logar.");
+        });
     }
 
+    // Mantive sua animação Matrix que já existia
     function startMatrixAnimation() {
       const canvas = document.getElementById("matrixCanvas");
       const ctx = canvas.getContext("2d");
-
       canvas.width = window.innerWidth;
       canvas.height = window.innerHeight;
-
       const letters = "sedrah zither".split("");
       const fontSize = 20;
       const columns = canvas.width / fontSize;
@@ -47,22 +92,16 @@
       function draw() {
         ctx.fillStyle = "rgba(0, 0, 0, 0.05)";
         ctx.fillRect(0, 0, canvas.width, canvas.height);
-
         ctx.fillStyle = "#0F0";
         ctx.font = fontSize + "px monospace";
-
         for (let i = 0; i < drops.length; i++) {
           const text = letters[Math.floor(Math.random() * letters.length)];
           ctx.fillText(text, i * fontSize, drops[i] * fontSize);
-
-          if (drops[i] * fontSize > canvas.height && Math.random() > 0.975) {
-            drops[i] = 0;
-          }
+          if (drops[i] * fontSize > canvas.height && Math.random() > 0.975) drops[i] = 0;
           drops[i]++;
         }
       }
-
-      setInterval(draw, 50);
+      setInterval(draw, 33);
     }
   </script>
 </body>
