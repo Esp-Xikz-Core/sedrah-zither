@@ -1,67 +1,46 @@
 <!DOCTYPE html>
-<html lang="pt-BR">
+<html>
 <head>
-  <meta charset="UTF-8">
-  <title>Gerador de Acesso - Sedrah Zither</title>
+  <title>Gerador de Chaves - Sedrah Zither</title>
   <style>
     body { background: #000; color: #0f0; font-family: monospace; text-align: center; padding-top: 50px; }
-    #token-box { font-size: 50px; border: 2px solid #0f0; display: inline-block; padding: 20px; margin-top: 20px; background: #111; color: #fff; }
-    .btn-google { background: #4285F4; color: white; border: none; padding: 15px 30px; border-radius: 5px; cursor: pointer; font-size: 18px; }
+    #key-display { font-size: 40px; border: 2px dashed #0f0; padding: 20px; margin: 20px; display: none; }
+    button { padding: 15px; cursor: pointer; background: #0f0; color: #000; font-weight: bold; }
   </style>
 </head>
 <body>
-  <h2>PAINEL DE LICENÇA - SEDRAH ZITHER</h2>
-  <div id="status">Clique abaixo para gerar sua chave de hoje:</div>
-  <br>
-  <button class="btn-google" id="btnLogar">Logar com Google</button>
-
-  <div id="area-token" style="display:none">
-    <p>Seu código de acesso único é:</p>
-    <div id="token-box">------</div>
-    <p>Copie este código e cole no seu aplicativo executável.</p>
-  </div>
+  <h1>GERADOR DE ACESSO DIÁRIO</h1>
+  <button id="btnGerar">LOGAR E GERAR CHAVE</button>
+  <div id="key-display"></div>
 
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-database-compat.js"></script>
 
   <script>
-    const firebaseConfig = {
-      apiKey: "AIzaSyB81OqdbTMkwLw7i51X95bRQftoFAItth8",
-      authDomain: "sedrah-zither-auth.firebaseapp.com",
-      databaseURL: "https://sedrah-zither-auth-default-rtdb.firebaseio.com",
-      projectId: "sedrah-zither-auth",
-      storageBucket: "sedrah-zither-auth.firebasestorage.app",
-      messagingSenderId: "1043486278925",
-      appId: "1:1043486278925:web:be02b229249a6911165c44"
-    };
+    const firebaseConfig = { /* SUA CONFIG AQUI */ };
     firebase.initializeApp(firebaseConfig);
-    const provider = new firebase.auth.GoogleAuthProvider();
+    
+    document.getElementById("btnGerar").onclick = () => {
+      const provider = new firebase.auth.GoogleAuthProvider();
+      firebase.auth().signInWithPopup(provider).then(res => {
+        if (res.user.email === "lorenzzob21@gmail.com") { // SEU GMAIL
+          // Gera chave no padrão: SZ-XXXX (Ex: SZ-4829)
+          const num = Math.floor(1000 + Math.random() * 9000);
+          const chave = "SZ-" + num;
 
-    document.getElementById("btnLogar").addEventListener("click", () => {
-      firebase.auth().signInWithPopup(provider).then(result => {
-        const user = result.user;
-        const autorizados = ["lorenzzob21@gmail.com"];
-
-        if (autorizados.includes(user.email)) {
-          // Gera código de 6 dígitos aleatórios
-          const novoCodigo = Math.floor(100000 + Math.random() * 900000);
-          
-          // Salva no Realtime Database
-          firebase.database().ref('tokens/' + novoCodigo).set({
-            usado: false,
-            criadoEm: Date.now()
+          // Salva no banco para o App reconhecer
+          firebase.database().ref('chaves_diarias/' + chave).set({
+            utilizada: false,
+            data: new Date().toLocaleDateString()
           }).then(() => {
-            document.getElementById("btnLogar").style.display = "none";
-            document.getElementById("status").innerText = "ACESSO AUTORIZADO";
-            document.getElementById("area-token").style.display = "block";
-            document.getElementById("token-box").innerText = novoCodigo;
+            document.getElementById("btnGerar").style.display = "none";
+            document.getElementById("key-display").style.display = "block";
+            document.getElementById("key-display").innerText = "SUA CHAVE: " + chave;
           });
-        } else {
-          alert("E-mail não autorizado para gerar licenças.");
-        }
+        } else { alert("Não autorizado"); }
       });
-    });
+    };
   </script>
 </body>
 </html>
