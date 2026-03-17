@@ -1,46 +1,76 @@
 <!DOCTYPE html>
-<html>
+<html lang="pt-BR">
 <head>
-  <title>Gerador de Chaves - Sedrah Zither</title>
+  <meta charset="UTF-8">
+  <title>Gerador Sedrah Zither</title>
   <style>
     body { background: #000; color: #0f0; font-family: monospace; text-align: center; padding-top: 50px; }
-    #key-display { font-size: 40px; border: 2px dashed #0f0; padding: 20px; margin: 20px; display: none; }
-    button { padding: 15px; cursor: pointer; background: #0f0; color: #000; font-weight: bold; }
+    #status { margin-bottom: 20px; font-size: 1.2rem; }
+    #token-box { font-size: 50px; border: 2px solid #0f0; display: inline-block; padding: 20px; margin-top: 20px; background: #111; color: #fff; box-shadow: 0 0 15px #0f0; }
+    .btn-gerar { background: #28a745; color: white; border: none; padding: 15px 30px; border-radius: 5px; cursor: pointer; font-size: 18px; font-weight: bold; }
+    .btn-gerar:hover { background: #218838; }
   </style>
 </head>
 <body>
-  <h1>GERADOR DE ACESSO DIÁRIO</h1>
-  <button id="btnGerar">LOGAR E GERAR CHAVE</button>
-  <div id="key-display"></div>
+  <h2>PAINEL DE ACESSO - JEEP RUBI</h2>
+  <div id="status">Clique no botão verde para entrar com Google e gerar sua chave:</div>
+  <br>
+  <button class="btn-gerar" id="btnLogar">GERAR CHAVE DE ACESSO</button>
+
+  <div id="area-token" style="display:none">
+    <p>Sua chave SZ única de hoje:</p>
+    <div id="token-box">------</div>
+    <p>Copie e cole no seu aplicativo do PC.</p>
+  </div>
 
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-database-compat.js"></script>
 
   <script>
-    const firebaseConfig = { /* SUA CONFIG AQUI */ };
-    firebase.initializeApp(firebaseConfig);
-    
-    document.getElementById("btnGerar").onclick = () => {
-      const provider = new firebase.auth.GoogleAuthProvider();
-      firebase.auth().signInWithPopup(provider).then(res => {
-        if (res.user.email === "lorenzzob21@gmail.com") { // SEU GMAIL
-          // Gera chave no padrão: SZ-XXXX (Ex: SZ-4829)
-          const num = Math.floor(1000 + Math.random() * 9000);
-          const chave = "SZ-" + num;
-
-          // Salva no banco para o App reconhecer
-          firebase.database().ref('chaves_diarias/' + chave).set({
-            utilizada: false,
-            data: new Date().toLocaleDateString()
-          }).then(() => {
-            document.getElementById("btnGerar").style.display = "none";
-            document.getElementById("key-display").style.display = "block";
-            document.getElementById("key-display").innerText = "SUA CHAVE: " + chave;
-          });
-        } else { alert("Não autorizado"); }
-      });
+    const firebaseConfig = {
+      apiKey: "AIzaSyB81OqdbTMkwLw7i51X95bRQftoFAItth8",
+      authDomain: "sedrah-zither-auth.firebaseapp.com",
+      databaseURL: "https://sedrah-zither-auth-default-rtdb.firebaseio.com",
+      projectId: "sedrah-zither-auth",
+      storageBucket: "sedrah-zither-auth.firebasestorage.app",
+      messagingSenderId: "1043486278925",
+      appId: "1:1043486278925:web:be02b229249a6911165c44"
     };
+    
+    firebase.initializeApp(firebaseConfig);
+    const provider = new firebase.auth.GoogleAuthProvider();
+
+    // Ação do botão verde
+    document.getElementById("btnLogar").addEventListener("click", () => {
+      // Abre a janelinha do Google
+      firebase.auth().signInWithPopup(provider).then(result => {
+        const user = result.user;
+        const autorizados = ["lorenzzob21@gmail.com"]; // Seu e-mail
+
+        if (autorizados.includes(user.email)) {
+          // Cria a chave SZ-XXXX
+          const num = Math.floor(1000 + Math.random() * 9000);
+          const chaveGerada = "SZ-" + num;
+          
+          // Salva no Banco de Dados
+          firebase.database().ref('chaves_diarias/' + chaveGerada).set({
+            utilizada: false,
+            criadoEm: Date.now()
+          }).then(() => {
+            document.getElementById("btnLogar").style.display = "none";
+            document.getElementById("status").innerText = "AUTORIZADO COM SUCESSO";
+            document.getElementById("area-token").style.display = "block";
+            document.getElementById("token-box").innerText = chaveGerada;
+          });
+        } else {
+          alert("E-mail não autorizado para gerar chaves.");
+        }
+      }).catch(error => {
+        console.error(error);
+        alert("Erro ao abrir login: " + error.message);
+      });
+    });
   </script>
 </body>
 </html>
