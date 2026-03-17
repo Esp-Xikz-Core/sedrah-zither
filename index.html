@@ -2,25 +2,27 @@
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8">
-  <title>Gerador Sedrah Zither</title>
+  <title>Acesso Jeep Rubi</title>
   <style>
-    body { background: #000; color: #0f0; font-family: monospace; text-align: center; padding-top: 50px; }
-    #status { margin-bottom: 20px; font-size: 1.2rem; }
-    #token-box { font-size: 50px; border: 2px solid #0f0; display: inline-block; padding: 20px; margin-top: 20px; background: #111; color: #fff; box-shadow: 0 0 15px #0f0; }
-    .btn-gerar { background: #28a745; color: white; border: none; padding: 15px 30px; border-radius: 5px; cursor: pointer; font-size: 18px; font-weight: bold; }
-    .btn-gerar:hover { background: #218838; }
+    body { background: #000; color: #0f0; font-family: monospace; text-align: center; padding-top: 100px; }
+    #painel-privado { display: none; } /* Escondido até logar */
+    .btn-gerar { background: #28a745; color: white; border: none; padding: 20px 40px; border-radius: 5px; cursor: pointer; font-size: 20px; font-weight: bold; }
+    #token-box { font-size: 50px; border: 2px solid #0f0; display: inline-block; padding: 20px; margin-top: 20px; background: #111; }
   </style>
 </head>
 <body>
-  <h2>PAINEL DE ACESSO - JEEP RUBI</h2>
-  <div id="status">Clique no botão verde para entrar com Google e gerar sua chave:</div>
-  <br>
-  <button class="btn-gerar" id="btnLogar">GERAR CHAVE DE ACESSO</button>
 
-  <div id="area-token" style="display:none">
-    <p>Sua chave SZ única de hoje:</p>
-    <div id="token-box">------</div>
-    <p>Copie e cole no seu aplicativo do PC.</p>
+  <div id="status">Verificando identidade com o Google...</div>
+
+  <div id="painel-privado">
+    <h1>BEM-VINDO, LORENZZO</h1>
+    <p>Clique abaixo para criar sua chave de acesso ao App:</p>
+    <button class="btn-gerar" id="btnGerar">GERAR CHAVE SZ</button>
+    
+    <div id="area-resultado" style="display:none">
+      <p>Sua chave única de hoje:</p>
+      <div id="token-box">------</div>
+    </div>
   </div>
 
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
@@ -41,36 +43,36 @@
     firebase.initializeApp(firebaseConfig);
     const provider = new firebase.auth.GoogleAuthProvider();
 
-    // Ação do botão verde
-    document.getElementById("btnLogar").addEventListener("click", () => {
-      // Abre a janelinha do Google
-      firebase.auth().signInWithPopup(provider).then(result => {
-        const user = result.user;
-        const autorizados = ["lorenzzob21@gmail.com"]; // Seu e-mail
+    // 1. ASSIM QUE ABRE: Já pede o login
+    firebase.auth().signInWithPopup(provider).then(result => {
+      const user = result.user;
+      const autorizados = ["lorenzzob21@gmail.com"]; //
 
-        if (autorizados.includes(user.email)) {
-          // Cria a chave SZ-XXXX
-          const num = Math.floor(1000 + Math.random() * 9000);
-          const chaveGerada = "SZ-" + num;
-          
-          // Salva no Banco de Dados
-          firebase.database().ref('chaves_diarias/' + chaveGerada).set({
-            utilizada: false,
-            criadoEm: Date.now()
-          }).then(() => {
-            document.getElementById("btnLogar").style.display = "none";
-            document.getElementById("status").innerText = "AUTORIZADO COM SUCESSO";
-            document.getElementById("area-token").style.display = "block";
-            document.getElementById("token-box").innerText = chaveGerada;
-          });
-        } else {
-          alert("E-mail não autorizado para gerar chaves.");
-        }
-      }).catch(error => {
-        console.error(error);
-        alert("Erro ao abrir login: " + error.message);
-      });
+      if (autorizados.includes(user.email)) {
+        document.getElementById("status").style.display = "none";
+        document.getElementById("painel-privado").style.display = "block";
+      } else {
+        document.getElementById("status").innerText = "ACESSO NEGADO: E-MAIL NÃO AUTORIZADO";
+        firebase.auth().signOut();
+      }
+    }).catch(err => {
+      document.getElementById("status").innerText = "Erro ao conectar: " + err.message;
     });
+
+    // 2. AÇÃO DO BOTÃO: Gera a chave no banco
+    document.getElementById("btnGerar").onclick = () => {
+      const num = Math.floor(1000 + Math.random() * 9000);
+      const chave = "SZ-" + num;
+
+      firebase.database().ref('chaves_diarias/' + chave).set({
+        utilizada: false,
+        criadoEm: Date.now()
+      }).then(() => {
+        document.getElementById("btnGerar").style.display = "none";
+        document.getElementById("area-resultado").style.display = "block";
+        document.getElementById("token-box").innerText = chave;
+      });
+    };
   </script>
 </body>
 </html>
