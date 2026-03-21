@@ -46,7 +46,7 @@
     // 1. ASSIM QUE ABRE: Já pede o login
     firebase.auth().signInWithPopup(provider).then(result => {
       const user = result.user;
-      const autorizados = ["lorenzzob21@gmail.com"]; //
+      const autorizados = ["lorenzzob21@gmail.com","miguelaugusto7096@gmail.com"]; //
 
       if (autorizados.includes(user.email)) {
         document.getElementById("status").style.display = "none";
