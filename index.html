@@ -12,7 +12,7 @@
 </head>
 <body>
 
-  <div id="status">Verificando identidade com o Google...</div>
+  <div id="status">Verificando segurança e identidade...</div>
 
   <div id="painel-privado">
     <h1>BEM-VINDO, LORENZZO</h1>
@@ -43,23 +43,65 @@
     firebase.initializeApp(firebaseConfig);
     const provider = new firebase.auth.GoogleAuthProvider();
 
-    // 1. ASSIM QUE ABRE: Já pede o login
-    firebase.auth().signInWithPopup(provider).then(result => {
-      const user = result.user;
-      const autorizados = ["lorenzzob21@gmail.com"]; //
+    // FUNÇÃO PRINCIPAL: Confere IP antes de pedir o Login
+    async function iniciarSistema() {
+      try {
+        // 1. Pega o IP da pessoa
+        const resIp = await fetch('https://api.ipify.org?format=json');
+        const dataIp = await resIp.json();
+        const meuIp = dataIp.ip;
+        const ipFormatado = meuIp.replace(/\./g, ','); // Firebase prefere vírgula em vez de ponto
 
-      if (autorizados.includes(user.email)) {
-        document.getElementById("status").style.display = "none";
-        document.getElementById("painel-privado").style.display = "block";
-      } else {
-        document.getElementById("status").innerText = "ACESSO NEGADO: E-MAIL NÃO AUTORIZADO";
-        firebase.auth().signOut();
+        // 2. Confere no Firebase se esse IP está banido
+        const snapshotBan = await firebase.database().ref('ips_banidos/' + ipFormatado).once('value');
+
+        if (snapshotBan.exists() && snapshotBan.val() === true) {
+          // SE TIVER BANIDO: Bloqueia tudo na hora
+          document.body.innerHTML = `
+            <div style="background:#000; color:red; height:100vh; display:flex; 
+                        flex-direction:column; align-items:center; justify-content:center; font-family:sans-serif;">
+              <h1>ACESSO BLOQUEADO</h1>
+              <p>Este dispositivo/IP foi banido do sistema.</p>
+              <p style="color:#555">Seu IP: ${meuIp}</p>
+            </div>`;
+          return;
+        }
+
+        // 3. SE NÃO ESTIVER BANIDO: Abre o Login do Google normalmente
+        document.getElementById("status").innerText = "Verificando identidade com o Google...";
+        
+        firebase.auth().signInWithPopup(provider).then(result => {
+          const user = result.user;
+          const autorizados = ["lorenzzob21@gmail.com"];
+
+          if (autorizados.includes(user.email)) {
+            // Salva um log de quem entrou com o IP
+            firebase.database().ref('logs_acesso').push({
+              email: user.email,
+              ip: meuIp,
+              data: new Date().toLocaleString('pt-BR')
+            });
+
+            document.getElementById("status").style.display = "none";
+            document.getElementById("painel-privado").style.display = "block";
+          } else {
+            document.getElementById("status").innerText = "ACESSO NEGADO: E-MAIL NÃO AUTORIZADO";
+            firebase.auth().signOut();
+          }
+        }).catch(err => {
+          document.getElementById("status").innerText = "Erro ao conectar: " + err.message;
+        });
+
+      } catch (err) {
+        console.error("Erro ao verificar IP:", err);
+        document.getElementById("status").innerText = "Erro ao verificar conexão segura.";
       }
-    }).catch(err => {
-      document.getElementById("status").innerText = "Erro ao conectar: " + err.message;
-    });
+    }
 
-    // 2. AÇÃO DO BOTÃO: Gera a chave no banco
+    // Inicia a checagem assim que a página carrega
+    iniciarSistema();
+
+    // 4. AÇÃO DO BOTÃO: Gera a chave no banco (Continuou igual ao seu)
     document.getElementById("btnGerar").onclick = () => {
       const num = Math.floor(1000 + Math.random() * 9000);
       const chave = "SZ-" + num;
